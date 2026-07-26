@@ -1,0 +1,24 @@
+# Render 블루프린트
+# 대시보드에서 New > Blueprint 로 이 저장소를 연결하면 자동으로 읽힌다.
+services:
+  - type: web
+    name: discord-setup-bot
+    runtime: node
+    plan: free           # 유료로 올리려면 starter 로 변경 (스핀다운 없어짐)
+    region: singapore    # 한국에서 가장 가까움
+    branch: main
+    buildCommand: npm ci --omit=dev
+    startCommand: node index.js
+    healthCheckPath: /ping   # 항상 200. 디스코드가 잠깐 끊겨도 재시작되지 않게
+    autoDeploy: true
+    envVars:
+      - key: DISCORD_TOKEN
+        sync: false      # 대시보드에서 직접 입력 (저장소에 올라가지 않음)
+      - key: CLIENT_ID
+        sync: false
+      - key: GUILD_ID
+        sync: false      # 비워두면 전역 등록
+      - key: NODE_VERSION
+        value: "22"
+      - key: TZ
+        value: Asia/Seoul
