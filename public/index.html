@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIGNAL — 보안국 인트라넷</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23050505'/%3E%3Ccircle cx='16' cy='16' r='11' fill='none' stroke='%23f2f2f2' stroke-width='2' stroke-dasharray='14 4'/%3E%3Ccircle cx='16' cy='16' r='3' fill='%23f2f2f2'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ================= SIGNAL SECURITY BUREAU / MONOCHROME ================= */
+:root{
+  --bg:#050505;
+  --bg2:#0a0a0a;
+  --panel:#0d0d0d;
+  --panel2:#121212;
+  --line:#1f1f1f;
+  --line2:#3a3a3a;
+  --white:#f2f2f2;
+  --gray:#8b8b8b;
+  --dim:#565656;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+  --sans:'Pretendard Variable',Pretendard,-apple-system,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scrollbar-color:#2a2a2a var(--bg)}
+body{
+  background:var(--bg);color:var(--white);font-family:var(--sans);
+  min-height:100vh;overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:var(--white);color:#000}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:#2a2a2a;border:2px solid var(--bg)}
+::-webkit-scrollbar-thumb:hover{background:#3d3d3d}
+button{font-family:inherit;cursor:pointer}
+input,select,textarea{font-family:inherit}
+a{color:var(--white)}
+
+.mono{font-family:var(--mono)}
+.muted{color:var(--gray)}
+.xs{font-size:11px}
+
+/* ---------- ambient fx ---------- */
+#fx-grid{
+  position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:
+    linear-gradient(rgba(255,255,255,.028) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.028) 1px,transparent 1px);
+  background-size:44px 44px;
+  mask-image:radial-gradient(ellipse at 50% 0%,#000 0%,transparent 75%);
+  -webkit-mask-image:radial-gradient(ellipse at 50% 0%,#000 0%,transparent 75%);
+}
+#fx-scan{position:fixed;inset:0;pointer-events:none;z-index:60;overflow:hidden}
+#fx-scan::before{
+  content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(0deg,rgba(255,255,255,.016) 0 1px,transparent 1px 3px);
+}
+#fx-scan::after{
+  content:'';position:absolute;left:0;right:0;top:-12%;height:12%;
+  background:linear-gradient(180deg,transparent,rgba(255,255,255,.05),transparent);
+  animation:scanMove 9s linear infinite;
+}
+@keyframes scanMove{0%{top:-12%}100%{top:112%}}
+
+#app{position:relative;z-index:1}
+
+/* ---------- common ---------- */
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.rv{opacity:0;animation:fadeUp .55s cubic-bezier(.2,.7,.2,1) forwards}
+
+.panel{background:var(--panel);border:1px solid var(--line);padding:20px}
+.corners{position:relative}
+.corners::before,.corners::after{
+  content:'';position:absolute;width:14px;height:14px;
+  border:1px solid var(--white);opacity:.65;pointer-events:none;
+}
+.corners::before{top:-1px;left:-1px;border-right:0;border-bottom:0}
+.corners::after{bottom:-1px;right:-1px;border-left:0;border-top:0}
+
+.sec{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin:0 0 16px}
+.sec-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.28em;color:var(--dim);margin-bottom:6px}
+.sec-title{font-size:19px;font-weight:800;letter-spacing:.02em;position:relative;padding-bottom:10px}
+.sec-title::after{
+  content:'';position:absolute;left:0;bottom:0;height:1px;width:100%;
+  background:linear-gradient(90deg,var(--white),transparent);
+  transform-origin:left;animation:lineGrow .8s .15s cubic-bezier(.2,.7,.2,1) backwards;
+}
+@keyframes lineGrow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.sec-side{font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--dim);white-space:nowrap}
+
+.btn{
+  background:transparent;border:1px solid var(--line2);color:var(--white);
+  font-family:var(--mono);font-size:12px;letter-spacing:.14em;
+  padding:10px 18px;transition:all .18s ease;text-transform:uppercase;
+}
+.btn:hover{background:var(--white);color:#000;border-color:var(--white)}
+.btn:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{
+  outline:1px solid var(--white);outline-offset:2px;
+}
+.btn-solid{background:var(--white);color:#000;border-color:var(--white)}
+.btn-solid:hover{background:transparent;color:var(--white)}
+.btn-xs{padding:6px 12px;font-size:10px}
+.btn-block{display:block;width:100%}
+.btn-ghost{border-color:var(--line)}
+.btn:disabled{opacity:.4;pointer-events:none}
+
+.inp{
+  width:100%;background:transparent;border:0;border-bottom:1px solid var(--line2);
+  color:var(--white);font-size:14px;padding:10px 2px;transition:border-color .2s;
+}
+.inp:focus{outline:none;border-color:var(--white);box-shadow:0 1px 0 var(--white)}
+.inp::placeholder{color:var(--dim)}
+select.inp,textarea.inp{
+  border:1px solid var(--line2);background:var(--bg2);padding:10px 12px;
+}
+select.inp{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--gray) 50%),linear-gradient(135deg,var(--gray) 50%,transparent 50%);background-position:calc(100% - 18px) 50%,calc(100% - 13px) 50%;background-size:5px 5px;background-repeat:no-repeat}
+select.inp:focus,textarea.inp:focus{border-color:var(--white);box-shadow:none}
+select.inp option{background:#0a0a0a;color:var(--white)}
+textarea.inp{resize:vertical;min-height:120px;line-height:1.6}
+.field{margin-bottom:16px}
+.field label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--gray);margin-bottom:4px;text-transform:uppercase}
+
+.hr{height:1px;background:var(--line);border:0;margin:16px 0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+
+/* ---------- login ---------- */
+.login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px 16px}
+.login-inner{width:100%;max-width:400px;display:flex;flex-direction:column;align-items:center;text-align:center}
+.emblem{width:104px;height:104px;color:var(--white);margin-bottom:22px}
+.e-rot{transform-origin:center;transform-box:fill-box;animation:rot 16s linear infinite}
+@keyframes rot{to{transform:rotate(360deg)}}
+.e-draw{stroke-dasharray:240;stroke-dashoffset:240;animation:draw 1.4s .2s ease forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+.e-core{animation:corePulse 2.4s ease-in-out infinite}
+@keyframes corePulse{0%,100%{opacity:1}50%{opacity:.35}}
+.login-title{
+  font-size:38px;font-weight:900;letter-spacing:.42em;text-indent:.42em;
+  animation:fadeUp .7s .1s backwards;
+}
+.login-sub{
+  font-family:var(--mono);font-size:10px;letter-spacing:.34em;color:var(--gray);
+  margin:8px 0 20px;animation:fadeUp .7s .25s backwards;
+}
+.boot{
+  width:100%;text-align:left;font-size:11px;color:var(--dim);
+  min-height:76px;line-height:1.7;letter-spacing:.04em;margin-bottom:20px;
+}
+.boot .ok{color:var(--gray)}
+.boot .warn{color:var(--white)}
+.cursor{display:inline-block;width:7px;height:12px;background:var(--white);vertical-align:-1px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.login-card{width:100%;background:var(--panel);border:1px solid var(--line);padding:26px 24px;text-align:left;animation:fadeUp .7s .4s backwards}
+.tabs{display:flex;border:1px solid var(--line2);margin-bottom:22px}
+.tabs button{
+  flex:1;background:transparent;border:0;color:var(--gray);
+  font-family:var(--mono);font-size:11px;letter-spacing:.2em;padding:10px 0;transition:all .18s;
+}
+.tabs button.on{background:var(--white);color:#000}
+.note{font-size:11px;color:var(--dim);line-height:1.6;margin-top:14px}
+.note b{color:var(--gray);font-weight:600}
+.login-foot{margin-top:22px;font-size:9px;letter-spacing:.24em;color:#3a3a3a;animation:fadeUp .7s .55s backwards}
+.err{font-size:12px;color:var(--white);border:1px dashed var(--line2);padding:8px 10px;margin-bottom:14px;display:none}
+.err.show{display:block;animation:fadeUp .3s}
+
+/* ---------- shell ---------- */
+.top{
+  position:sticky;top:0;z-index:40;height:58px;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 20px;background:rgba(5,5,5,.92);border-bottom:1px solid var(--line);
+  backdrop-filter:blur(6px);
+}
+.brand{display:flex;align-items:center;gap:11px}
+.brand svg{width:26px;height:26px;color:var(--white)}
+.brand-t b{display:block;font-size:15px;font-weight:900;letter-spacing:.3em;line-height:1}
+.brand-t span{display:block;font-family:var(--mono);font-size:8px;letter-spacing:.3em;color:var(--gray);margin-top:3px}
+.top-right{display:flex;align-items:center;gap:14px}
+.top-clock{font-size:12px;color:var(--gray);letter-spacing:.08em}
+.chip{
+  display:flex;align-items:center;gap:8px;border:1px solid var(--line);
+  padding:6px 12px;font-size:12px;color:var(--white);background:var(--bg2);
+}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--dim);flex:none}
+.dot.on{background:var(--white);animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(242,242,242,.5)}70%{box-shadow:0 0 0 7px rgba(242,242,242,0)}}
+
+.body{display:flex;min-height:calc(100vh - 58px)}
+.side{
+  width:216px;flex:none;border-right:1px solid var(--line);
+  padding:22px 0;background:var(--bg2);
+}
+.nav-item{
+  display:flex;align-items:center;gap:12px;width:100%;text-align:left;
+  background:transparent;border:0;border-left:2px solid transparent;
+  padding:13px 20px;color:var(--gray);font-size:13px;letter-spacing:.04em;
+  transition:all .16s;
+}
+.nav-item .ni-num{font-family:var(--mono);font-size:10px;color:var(--dim);letter-spacing:.1em;transition:color .16s}
+.nav-item:hover{background:#101010;color:var(--white)}
+.nav-item.on{border-left-color:var(--white);color:var(--white);background:#101010;font-weight:600}
+.nav-item.on .ni-num{color:var(--white)}
+.side-foot{margin-top:28px;padding:0 20px;font-family:var(--mono);font-size:9px;letter-spacing:.18em;color:#333;line-height:1.9}
+
+main{flex:1;padding:28px;max-width:1160px;width:100%;margin:0 auto}
+.loading{font-family:var(--mono);font-size:12px;letter-spacing:.3em;color:var(--dim);padding:60px 0;text-align:center;animation:corePulse 1.2s infinite}
+
+/* ---------- ticker ---------- */
+.ticker{
+  display:flex;align-items:center;border:1px solid var(--line);background:var(--bg2);
+  margin-bottom:18px;overflow:hidden;
+}
+.ticker-tag{
+  flex:none;font-family:var(--mono);font-size:9px;letter-spacing:.24em;
+  background:var(--white);color:#000;padding:9px 12px;font-weight:700;
+}
+.ticker-view{flex:1;overflow:hidden;white-space:nowrap}
+.ticker-inner{display:inline-block;white-space:nowrap;padding:8px 0;font-size:12px;color:var(--gray);animation:marq 22s linear infinite}
+.ticker-inner b{color:var(--white);font-weight:600}
+@keyframes marq{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* ---------- dashboard ---------- */
+.dash-top{display:grid;grid-template-columns:400px 1fr;gap:16px;margin-bottom:16px}
+
+.idcard{background:var(--panel);border:1px solid var(--line2);position:relative;overflow:hidden}
+.id-head{
+  display:flex;justify-content:space-between;align-items:center;
+  border-bottom:1px solid var(--line);padding:10px 16px;
+  font-family:var(--mono);font-size:9px;letter-spacing:.24em;color:var(--gray);
+}
+.id-head b{color:var(--white);letter-spacing:.3em}
+.id-main{display:flex;gap:16px;padding:16px}
+.id-photo{
+  width:84px;height:102px;flex:none;border:1px solid var(--line2);background:var(--bg2);
+  display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;
+}
+.id-photo svg{width:56px;height:56px;color:#2e2e2e}
+.id-photo::after{
+  content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(0deg,rgba(255,255,255,.03) 0 1px,transparent 1px 3px);
+}
+.id-fields{flex:1;display:flex;flex-direction:column;justify-content:center;gap:7px;min-width:0}
+.id-row{display:flex;gap:10px;font-size:13px;align-items:baseline}
+.id-row .k{font-family:var(--mono);font-size:9px;letter-spacing:.16em;color:var(--dim);width:58px;flex:none}
+.id-row .v{color:var(--white);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.id-row .v.mono{font-weight:500;font-size:12px}
+.id-bottom{display:flex;align-items:center;gap:12px;border-top:1px solid var(--line);padding:12px 16px}
+.barcode{
+  flex:1;height:24px;
+  background:repeating-linear-gradient(90deg,
+    var(--white) 0 1px,transparent 1px 4px,
+    var(--white) 4px 6px,transparent 6px 7px,
+    var(--white) 7px 8px,transparent 8px 12px,
+    var(--white) 12px 13px,transparent 13px 15px);
+  opacity:.85;
+}
+.id-no{font-family:var(--mono);font-size:9px;letter-spacing:.14em;color:var(--gray)}
+.id-watermark{
+  position:absolute;right:-14px;top:38%;transform:rotate(-18deg);
+  font-family:var(--mono);font-weight:700;font-size:30px;letter-spacing:.3em;
+  color:rgba(255,255,255,.045);pointer-events:none;user-select:none;
+}
+
+.duty-quick{display:flex;flex-direction:column;justify-content:space-between;gap:14px}
+.dq-status{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:11px;letter-spacing:.22em;color:var(--gray)}
+.dq-status .st{color:var(--white);font-weight:700}
+.dq-timer{font-family:var(--mono);font-size:42px;font-weight:700;letter-spacing:.06em;line-height:1}
+.dq-timer small{font-size:13px;color:var(--dim);letter-spacing:.2em;display:block;margin-top:8px;font-weight:400}
+
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:16px}
+.stat{background:var(--panel);border:1px solid var(--line);padding:18px;transition:border-color .2s}
+.stat:hover{border-color:var(--line2)}
+.stat-n{font-family:var(--mono);font-size:30px;font-weight:700;line-height:1}
+.stat-n em{font-style:normal;font-size:13px;color:var(--gray);margin-left:3px}
+.stat-l{font-size:11px;color:var(--gray);letter-spacing:.14em;margin-top:9px}
+
+.list{display:flex;flex-direction:column}
+.member-line{
+  display:flex;align-items:center;gap:11px;padding:11px 4px;
+  border-bottom:1px solid var(--line);font-size:13px;
+}
+.member-line:last-child{border-bottom:0}
+.member-line .m-rank{font-family:var(--mono);font-size:10px;color:var(--gray);letter-spacing:.1em;border:1px solid var(--line2);padding:2px 7px;flex:none}
+.member-line .m-name{font-weight:600}
+.member-line .m-cs{font-family:var(--mono);font-size:11px;color:var(--dim)}
+.member-line .m-time{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--gray)}
+.empty{padding:26px 0;text-align:center;font-size:12px;color:var(--dim);letter-spacing:.1em}
+
+.notice{padding:12px 4px;border-bottom:1px solid var(--line);font-size:13px;line-height:1.6}
+.notice:last-child{border-bottom:0}
+.notice-meta{font-family:var(--mono);font-size:10px;color:var(--dim);margin-top:5px;letter-spacing:.08em}
+
+/* ---------- duty ---------- */
+.bigclock{text-align:center;padding:34px 20px 30px}
+.bc-time{font-family:var(--mono);font-size:58px;font-weight:700;letter-spacing:.05em;line-height:1}
+.bc-time .colon{animation:blink 2s steps(1) infinite}
+.bc-date{font-family:var(--mono);font-size:11px;letter-spacing:.3em;color:var(--gray);margin-top:12px}
+.duty-btn{
+  width:100%;padding:22px 0;font-size:15px;letter-spacing:.34em;font-weight:700;
+  margin-top:24px;
+}
+.duty-btn.working{
+  background:repeating-linear-gradient(45deg,transparent 0 12px,rgba(255,255,255,.06) 12px 24px);
+  border-color:var(--white);
+}
+.duty-btn.working:hover{background:var(--white);color:#000}
+.ministats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:16px 0}
+.ms{border:1px solid var(--line);background:var(--panel);padding:14px 16px}
+.ms .n{font-family:var(--mono);font-size:19px;font-weight:700}
+.ms .l{font-size:10px;color:var(--gray);letter-spacing:.16em;margin-top:6px}
+
+.toggle{display:inline-flex;border:1px solid var(--line2)}
+.tg-btn{background:transparent;border:0;color:var(--gray);font-family:var(--mono);font-size:10px;letter-spacing:.16em;padding:7px 14px;transition:all .16s}
+.tg-btn.on{background:var(--white);color:#000}
+
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{
+  text-align:left;font-family:var(--mono);font-size:9px;letter-spacing:.22em;
+  color:var(--dim);font-weight:500;padding:10px 10px;border-bottom:1px solid var(--line2);
+  text-transform:uppercase;
+}
+.tbl td{padding:11px 10px;border-bottom:1px solid var(--line);color:#d7d7d7}
+.tbl tr:hover td{background:#101010}
+.tbl .mono-cell{font-family:var(--mono);font-size:11.5px;color:var(--gray)}
+.tbl .strong{color:var(--white);font-weight:600}
+
+/* ---------- reports ---------- */
+.filterbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.chip-btn{
+  background:transparent;border:1px solid var(--line2);color:var(--gray);
+  font-family:var(--mono);font-size:10px;letter-spacing:.16em;padding:7px 13px;transition:all .16s;
+}
+.chip-btn:hover{color:var(--white);border-color:var(--gray)}
+.chip-btn.on{background:var(--white);color:#000;border-color:var(--white)}
+
+.report{border:1px solid var(--line);background:var(--panel);margin-bottom:10px;transition:border-color .2s}
+.report:hover{border-color:var(--line2)}
+.report.open{border-color:var(--line2)}
+.report-head{
+  width:100%;display:flex;align-items:center;gap:12px;background:transparent;border:0;
+  color:var(--white);padding:15px 16px;text-align:left;font-size:14px;
+}
+.tag{
+  flex:none;font-family:var(--mono);font-size:10px;letter-spacing:.1em;
+  border:1px solid var(--line2);color:var(--white);padding:3px 9px;
+}
+.tag .sym{margin-right:6px;color:var(--gray)}
+.report-title{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.report-meta{margin-left:auto;flex:none;font-family:var(--mono);font-size:10px;color:var(--dim);letter-spacing:.08em}
+.report-arrow{flex:none;color:var(--dim);font-size:11px;transition:transform .25s}
+.report.open .report-arrow{transform:rotate(90deg)}
+.report-body{display:grid;grid-template-rows:0fr;transition:grid-template-rows .3s ease}
+.report.open .report-body{grid-template-rows:1fr}
+.report-body>div{overflow:hidden}
+.rb-inner{padding:0 16px 16px;border-top:1px solid var(--line)}
+.rb-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:14px 0}
+.rb-field .k{font-family:var(--mono);font-size:9px;letter-spacing:.2em;color:var(--dim);margin-bottom:4px}
+.rb-field .v{font-size:13px;color:var(--white)}
+.report-content{font-size:13.5px;line-height:1.75;color:#d0d0d0;white-space:pre-wrap;border-left:2px solid var(--line2);padding-left:14px;margin:6px 0 12px}
+
+/* ---------- modal ---------- */
+.modal{position:fixed;inset:0;z-index:80;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn .2s}
+@keyframes fadeIn{from{opacity:0}}
+.modal-panel{
+  width:100%;max-width:560px;max-height:92vh;overflow-y:auto;
+  background:var(--panel);border:1px solid var(--line2);padding:26px;
+  animation:fadeUp .3s cubic-bezier(.2,.7,.2,1);
+}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.modal-title{font-size:16px;font-weight:800;letter-spacing:.04em}
+.modal-close{background:transparent;border:1px solid var(--line2);color:var(--gray);width:30px;height:30px;font-size:13px;transition:all .16s}
+.modal-close:hover{background:var(--white);color:#000}
+
+/* ---------- ranks ---------- */
+.ranks-wrap{position:relative;display:flex;flex-direction:column;align-items:center;gap:14px;padding:10px 0 4px}
+.rank-line{position:absolute;top:0;bottom:0;left:50%;width:1px;background:linear-gradient(180deg,var(--white),var(--line) 80%);opacity:.25}
+.tier{
+  position:relative;z-index:1;background:var(--panel);border:1px solid var(--line);
+  padding:16px 20px;transition:all .2s;
+}
+.tier:hover{border-color:var(--white);transform:translateY(-2px)}
+.tier-top{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.tier-code{font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--dim)}
+.tier-name{font-size:17px;font-weight:800;letter-spacing:.06em}
+.tier-count{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--gray)}
+.tier-desc{font-size:12px;color:var(--gray);margin-top:6px;line-height:1.6}
+.tier-members{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.mem-chip{
+  display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line2);
+  font-size:11.5px;color:#d7d7d7;padding:4px 10px;
+}
+.mem-chip .dot{width:5px;height:5px}
+.tier.t-0{border-color:var(--white)}
+.tier.t-0 .tier-name{letter-spacing:.14em}
+
+/* ---------- admin ---------- */
+.rank-sel{width:120px;background:var(--bg2);color:var(--white);border:1px solid var(--line2);font-size:12px;padding:6px 8px;font-family:var(--mono)}
+.rank-sel:focus{outline:none;border-color:var(--white)}
+.danger{border-color:var(--line2);color:var(--gray)}
+.danger:hover{background:var(--white);color:#000}
+
+/* ---------- toast ---------- */
+#toast-wrap{position:fixed;right:18px;bottom:18px;z-index:100;display:flex;flex-direction:column;gap:8px}
+.toast{
+  background:var(--panel);border:1px solid var(--line2);border-left:2px solid var(--white);
+  color:var(--white);font-size:13px;padding:12px 16px;min-width:220px;max-width:340px;
+  animation:toastIn .3s cubic-bezier(.2,.7,.2,1);
+}
+.toast.bad{border-left-style:dashed;color:#dcdcdc}
+.toast .t-tag{font-family:var(--mono);font-size:9px;letter-spacing:.24em;color:var(--dim);display:block;margin-bottom:4px}
+@keyframes toastIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:none}}
+.toast.out{opacity:0;transform:translateX(16px);transition:all .3s}
+
+/* ---------- responsive ---------- */
+@media (max-width:960px){
+  .dash-top{grid-template-columns:1fr}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .grid2{grid-template-columns:1fr}
+  .rb-grid{grid-template-columns:1fr 1fr}
+}
+@media (max-width:860px){
+  .body{flex-direction:column}
+  .side{width:100%;display:flex;overflow-x:auto;padding:0;border-right:0;border-bottom:1px solid var(--line)}
+  .nav-item{flex:none;border-left:0;border-bottom:2px solid transparent;padding:13px 16px}
+  .nav-item.on{border-bottom-color:var(--white)}
+  .side-foot{display:none}
+  main{padding:18px 14px}
+  .top{padding:0 14px}
+  .top-clock{display:none}
+  .bc-time{font-size:42px}
+  .dq-timer{font-size:34px}
+  .login-title{font-size:30px}
+  .tier{width:100% !important}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
+  .rv{opacity:1}
+}
+</style>
+</head>
+<body>
+<div id="fx-grid"></div>
+<div id="fx-scan"></div>
+<div id="app"></div>
+<div id="toast-wrap"></div>
+<script>
+/* ============================================================
+   SIGNAL SEC-NET CLIENT (SPA / hash routing)
+   ============================================================ */
+'use strict';
+
+const RANK_NAMES = ['국장','부국장','과장','팀장','선임요원','요원','수습요원'];
+const REPORT_TYPES = ['편의점','보석상','은행','인질극','추격전','기타'];
+const REPORT_RESULTS = ['전원 검거','일부 검거','도주','협상 타결','기타'];
+const TYPE_SYM = {'편의점':'●','보석상':'◆','은행':'■','인질극':'▲','추격전':'▶','기타':'○'};
+
+const app = document.getElementById('app');
+let token = localStorage.getItem('sg_token') || '';
+let me = null;
+let timers = [];
+let gen = 0;
+let dutyMine = false;
+let repFilter = 'ALL';
+
+function addTimer(fn, ms){ const t = setInterval(fn, ms); timers.push(t); return t; }
+function clearTimers(){ timers.forEach(clearInterval); timers = []; }
+
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const two = n => String(n).padStart(2, '0');
+function v(id){ const el = document.getElementById(id); return el ? el.value.trim() : ''; }
+function vraw(id){ const el = document.getElementById(id); return el ? el.value : ''; }
+function main(){ return document.getElementById('main'); }
+
+function fmtTime(ts){
+  const d = new Date(ts);
+  return String(d.getFullYear()).slice(2)+'.'+two(d.getMonth()+1)+'.'+two(d.getDate())+' '+two(d.getHours())+':'+two(d.getMinutes());
+}
+function fmtDur(ms){
+  ms = Math.max(0, Math.floor(ms || 0));
+  const h = Math.floor(ms/3600000), m = Math.floor(ms%3600000/60000);
+  if (h > 0) return h + '시간 ' + m + '분';
+  if (m > 0) return m + '분';
+  return Math.floor(ms/1000) + '초';
+}
+function fmtHMS(ms){
+  const s = Math.max(0, Math.floor(ms/1000));
+  return two(Math.floor(s/3600))+':'+two(Math.floor(s%3600/60))+':'+two(s%60);
+}
+function clockStr(){
+  const d = new Date();
+  return two(d.getHours())+':'+two(d.getMinutes())+':'+two(d.getSeconds());
+}
+
+function toast(msg, bad){
+  const w = document.getElementById('toast-wrap');
+  const el = document.createElement('div');
+  el.className = 'toast' + (bad ? ' bad' : '');
+  el.innerHTML = '<span class="t-tag">'+(bad ? '// ERROR' : '// SEC-NET')+'</span>'+esc(msg);
+  w.appendChild(el);
+  setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 320); }, 2600);
+}
+
+function setToken(t){
+  token = t || '';
+  if (token) localStorage.setItem('sg_token', token);
+  else localStorage.removeItem('sg_token');
+}
+
+async function api(path, opts){
+  opts = opts || {};
+  let res;
+  try {
+    res = await fetch('/api'+path, {
+      method: opts.method || 'GET',
+      headers: { 'Content-Type': 'application/json', 'X-Auth-Token': token },
+      body: opts.body ? JSON.stringify(opts.body) : undefined
+    });
+  } catch (e){ throw new Error('서버에 연결할 수 없습니다.'); }
+  let data = {};
+  try { data = await res.json(); } catch (e){}
+  if (res.status === 401){ setToken(''); me = null; go('login'); throw new Error(data.error || '인증이 만료되었습니다.'); }
+  if (!res.ok) throw new Error(data.error || '요청을 처리하지 못했습니다.');
+  return data;
+}
+
+function emblemSvg(cls, animate){
+  return '<svg class="'+cls+'" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'
+    + '<g class="'+(animate ? 'e-rot' : '')+'"><circle cx="60" cy="60" r="52" stroke="currentColor" stroke-width="1.5" stroke-dasharray="66 16"/></g>'
+    + '<circle class="'+(animate ? 'e-draw' : '')+'" cx="60" cy="60" r="38" stroke="currentColor" stroke-width="1" opacity=".55"/>'
+    + '<line x1="60" y1="10" x2="60" y2="24" stroke="currentColor"/>'
+    + '<line x1="60" y1="96" x2="60" y2="110" stroke="currentColor"/>'
+    + '<line x1="10" y1="60" x2="24" y2="60" stroke="currentColor"/>'
+    + '<line x1="96" y1="60" x2="110" y2="60" stroke="currentColor"/>'
+    + '<circle class="'+(animate ? 'e-core' : '')+'" cx="60" cy="60" r="3.5" fill="currentColor"/>'
+    + '</svg>';
+}
+function silhouetteSvg(){
+  return '<svg viewBox="0 0 64 64" fill="none"><circle cx="32" cy="24" r="11" stroke="currentColor" stroke-width="2"/><path d="M12 56c2-12 10-17 20-17s18 5 20 17" stroke="currentColor" stroke-width="2"/></svg>';
+}
+function countUp(el, target){
+  const t0 = performance.now(), dur = 700;
+  function step(t){
+    const p = Math.min(1, (t - t0) / dur);
+    el.textContent = Math.round(target * (1 - Math.pow(1 - p, 3)));
+    if (p < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+function stagger(){
+  document.querySelectorAll('#main .rv').forEach((el, i) => { el.style.animationDelay = (i * 60) + 'ms'; });
+}
+
+/* ---------------- router ---------------- */
+const routes = { login: viewLogin, dash: viewDash, duty: viewDuty, reports: viewReports, ranks: viewRanks, admin: viewAdmin };
+function currentRoute(){
+  const h = (location.hash || '').replace(/^#\/?/, '');
+  return h || (token ? 'dash' : 'login');
+}
+function go(name){
+  const target = '#/' + name;
+  if (location.hash === target) route(); else location.hash = target;
+}
+async function route(){
+  clearTimers(); gen++;
+  const g = gen;
+  const name = currentRoute();
+  if (!token && name !== 'login') return go('login');
+  if (token && name === 'login') return go('dash');
+  const fn = routes[name] || viewDash;
+  try { await fn(g); }
+  catch (e){ if (g === gen) toast(e.message, true); }
+}
+window.addEventListener('hashchange', route);
+
+async function ensureMe(){
+  if (!me){ const d = await api('/me'); me = d.me; }
+}
+
+/* ---------------- shell ---------------- */
+function shell(active, content){
+  const nav = [
+    ['dash', '대시보드', '01'],
+    ['duty', '출퇴근 기록', '02'],
+    ['reports', 'RP 보고서', '03'],
+    ['ranks', '직급표', '04']
+  ];
+  if (me && me.isAdmin) nav.push(['admin', '관리 콘솔', '05']);
+  const lvl = Math.max(1, RANK_NAMES.indexOf(me.rank) + 1);
+  app.innerHTML =
+    '<header class="top">'
+    + '<div class="brand">' + emblemSvg('', false) + '<div class="brand-t"><b>SIGNAL</b><span>SECURITY BUREAU</span></div></div>'
+    + '<div class="top-right">'
+    +   '<span class="top-clock mono js-clock">' + clockStr() + '</span>'
+    +   '<span class="chip"><i class="dot' + (me.onDuty ? ' on' : '') + '" id="hdr-dot"></i><span class="mono">' + esc(me.callsign) + '</span><span class="muted">' + esc(me.rank) + '</span></span>'
+    +   '<button class="btn btn-xs btn-ghost" id="logoutBtn">LOGOUT</button>'
+    + '</div>'
+    + '</header>'
+    + '<div class="body">'
+    + '<nav class="side">'
+    +   nav.map(n => '<button class="nav-item' + (n[0] === active ? ' on' : '') + '" data-go="' + n[0] + '"><span class="ni-num">' + n[2] + '</span><span>' + n[1] + '</span></button>').join('')
+    +   '<div class="side-foot">SIGNAL SEC-NET v3.1<br>ENCRYPTED CHANNEL<br>ACCESS LV-' + two(lvl) + '</div>'
+    + '</nav>'
+    + '<main id="main">' + content + '</main>'
+    + '</div>';
+  app.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => go(b.dataset.go)));
+  document.getElementById('logoutBtn').addEventListener('click', async () => {
+    try { await api('/logout', { method: 'POST' }); } catch (e){}
+    setToken(''); me = null;
+    toast('로그아웃되었습니다.');
+    go('login');
+  });
+  addTimer(() => {
+    const c = app.querySelector('.js-clock');
+    if (c) c.textContent = clockStr();
+  }, 1000);
+}
+
+/* ---------------- login ---------------- */
+async function viewLogin(g){
+  app.innerHTML =
+    '<div class="login"><div class="login-inner">'
+    + emblemSvg('emblem', true)
+    + '<h1 class="login-title">SIGNAL</h1>'
+    + '<div class="login-sub">SECURITY BUREAU · INTRANET</div>'
+    + '<div class="boot mono" id="boot"></div>'
+    + '<div class="login-card corners">'
+    +   '<div class="tabs"><button id="tab-login" class="on" type="button">로그인</button><button id="tab-reg" type="button">요원 등록</button></div>'
+    +   '<div class="err" id="loginErr"></div>'
+    +   '<form id="f-login">'
+    +     '<div class="field"><label>성명 / Name</label><input class="inp" id="li-name" maxlength="20" autocomplete="username" placeholder="요원 성명"></div>'
+    +     '<div class="field"><label>비밀번호 / Password</label><input class="inp" type="password" id="li-pw" autocomplete="current-password" placeholder="••••••••"></div>'
+    +     '<button class="btn btn-solid btn-block" type="submit">접속</button>'
+    +   '</form>'
+    +   '<form id="f-reg" hidden>'
+    +     '<div class="field"><label>성명 / Name</label><input class="inp" id="rg-name" maxlength="20" placeholder="RP 캐릭터 성명"></div>'
+    +     '<div class="field"><label>콜사인 / Callsign</label><input class="inp" id="rg-cs" maxlength="16" placeholder="예: SG-07"></div>'
+    +     '<div class="field"><label>비밀번호 / Password</label><input class="inp" type="password" id="rg-pw" autocomplete="new-password" placeholder="4자 이상"></div>'
+    +     '<button class="btn btn-solid btn-block" type="submit">등록</button>'
+    +     '<div class="note">· 최초 등록 요원은 <b>국장</b>으로 자동 임명됩니다.<br>· 이후 등록 요원은 <b>수습요원</b>으로 배치됩니다.</div>'
+    +   '</form>'
+    + '</div>'
+    + '<div class="login-foot mono">UNAUTHORIZED ACCESS IS PROHIBITED — SIGNAL SEC-NET</div>'
+    + '</div></div>';
+
+  const bootLines = [
+    ['SIGNAL SECURE NETWORK v3.1', ''],
+    ['ESTABLISHING ENCRYPTED CHANNEL ..... OK', 'ok'],
+    ['CLEARANCE DATABASE ................ OK', 'ok'],
+    ['AUTHORIZED PERSONNEL ONLY', 'warn']
+  ];
+  const bootEl = document.getElementById('boot');
+  (async () => {
+    for (let li = 0; li < bootLines.length; li++){
+      if (g !== gen) return;
+      const line = bootLines[li][0], cls = bootLines[li][1];
+      const row = document.createElement('div');
+      if (cls) row.className = cls;
+      bootEl.appendChild(row);
+      const cur = document.createElement('span'); cur.className = 'cursor';
+      bootEl.appendChild(cur);
+      for (let i = 0; i < line.length; i++){
+        if (g !== gen) return;
+        row.textContent = line.slice(0, i + 1);
+        await new Promise(r => setTimeout(r, 11));
+      }
+      cur.remove();
+      await new Promise(r => setTimeout(r, 130));
+    }
+    if (g === gen){
+      const cur = document.createElement('span'); cur.className = 'cursor';
+      bootEl.appendChild(cur);
+    }
+  })();
+
+  const tabL = document.getElementById('tab-login'), tabR = document.getElementById('tab-reg');
+  const fL = document.getElementById('f-login'), fR = document.getElementById('f-reg');
+  const errEl = document.getElementById('loginErr');
+  function swap(reg){
+    tabL.classList.toggle('on', !reg); tabR.classList.toggle('on', reg);
+    fL.hidden = reg; fR.hidden = !reg;
+    errEl.classList.remove('show');
+  }
+  tabL.addEventListener('click', () => swap(false));
+  tabR.addEventListener('click', () => swap(true));
+  function showErr(m){ errEl.textContent = m; errEl.classList.add('show'); }
+
+  fL.addEventListener('submit', async e => {
+    e.preventDefault();
+    try {
+      const d = await api('/login', { method: 'POST', body: { name: v('li-name'), password: vraw('li-pw') } });
+      setToken(d.token); me = d.me;
+      toast(me.name + ' 요원, 접속을 환영합니다.');
+      go('dash');
+    } catch (err){ showErr(err.message); }
+  });
+  fR.addEventListener('submit', async e => {
+    e.preventDefault();
+    try {
+      const d = await api('/register', { method: 'POST', body: { name: v('rg-name'), callsign: v('rg-cs'), password: vraw('rg-pw') } });
+      setToken(d.token); me = d.me;
+      toast('등록 완료 — 직급: ' + me.rank);
+      go('dash');
+    } catch (err){ showErr(err.message); }
+  });
+}
+
+/* ---------------- dashboard ---------------- */
+function idRow(k, vHtml){
+  return '<div class="id-row"><span class="k">' + k + '</span><span class="v">' + vHtml + '</span></div>';
+}
+function statCard(nv, label, unit){
+  return '<div class="stat rv"><div class="stat-n mono"><span class="cnt" data-v="' + nv + '">0</span><em>' + unit + '</em></div><div class="stat-l">' + label + '</div></div>';
+}
+function ondutyList(list){
+  if (!list.length) return '<div class="empty">현재 근무 중인 요원이 없습니다</div>';
+  return list.map(m =>
+    '<div class="member-line"><i class="dot on"></i><span class="m-rank">' + esc(m.rank) + '</span><span class="m-name">' + esc(m.name) + '</span><span class="m-cs mono">' + esc(m.callsign) + '</span><span class="m-time">' + fmtHMS(Date.now() - m.dutyStart) + '</span></div>'
+  ).join('');
+}
+async function dutyToggle(){
+  try {
+    if (me.onDuty){
+      const d = await api('/duty/end', { method: 'POST' });
+      me = d.me;
+      toast('퇴근 처리 완료 — 근무 시간 ' + fmtDur(d.ms));
+    } else {
+      const d = await api('/duty/start', { method: 'POST' });
+      me = d.me;
+      toast('출근 처리 완료. 오늘도 수고하십시오.');
+    }
+    route();
+  } catch (e){ toast(e.message, true); }
+}
+
+async function viewDash(g){
+  await ensureMe(); if (g !== gen) return;
+  shell('dash', '<div class="loading mono">LOADING SEC-NET ...</div>');
+  const d = await api('/overview'); if (g !== gen) return;
+  me = d.me;
+  const s = d.stats;
+  const onduty = d.members.filter(m => m.onDuty);
+  const lvl = Math.max(1, RANK_NAMES.indexOf(me.rank) + 1);
+  const n0 = d.notices[0];
+
+  let html = '';
+  if (n0){
+    const txt = '<b>공지</b> — ' + esc(n0.content) + ' <span class="mono" style="color:var(--dim)">[' + fmtTime(n0.createdAt) + ']</span>';
+    html += '<div class="ticker rv"><span class="ticker-tag">NOTICE</span><div class="ticker-view"><div class="ticker-inner">'
+      + '<span style="padding-right:90px">' + txt + '</span><span style="padding-right:90px">' + txt + '</span>'
+      + '</div></div></div>';
+  }
+
+  html += '<div class="dash-top">'
+    + '<div class="idcard corners rv">'
+    +   '<div class="id-watermark">SIGNAL</div>'
+    +   '<div class="id-head"><b>AGENT ID</b><span>SIGNAL SEC-NET</span></div>'
+    +   '<div class="id-main">'
+    +     '<div class="id-photo">' + silhouetteSvg() + '</div>'
+    +     '<div class="id-fields">'
+    +       idRow('NAME', esc(me.name))
+    +       idRow('CALLSIGN', '<span class="mono">' + esc(me.callsign) + '</span>')
+    +       idRow('RANK', esc(me.rank) + ' <span class="mono xs" style="color:var(--dim)">GRADE-' + two(lvl) + '</span>')
+    +       idRow('SINCE', '<span class="mono" style="font-size:12px;font-weight:500">' + fmtTime(me.joinedAt) + '</span>')
+    +     '</div>'
+    +   '</div>'
+    +   '<div class="id-bottom"><div class="barcode"></div><span class="id-no">NO.' + esc(String(me.id).replace('m_', '').toUpperCase()) + '</span></div>'
+    + '</div>'
+    + '<div class="panel corners duty-quick rv">'
+    +   '<div class="dq-status"><i class="dot' + (me.onDuty ? ' on' : '') + '"></i>STATUS — <span class="st">' + (me.onDuty ? '근무 중' : '대기 중') + '</span></div>'
+    +   '<div class="dq-timer mono" id="dq-timer">' + (me.onDuty ? fmtHMS(Date.now() - me.dutyStart) : '--:--:--') + '<small>' + (me.onDuty ? '현재 세션 근무 시간' : '출근 시 세션 타이머가 시작됩니다') + '</small></div>'
+    +   '<button class="btn duty-btn ' + (me.onDuty ? 'working' : 'btn-solid') + '" id="dutyBtn" style="margin-top:0">' + (me.onDuty ? '퇴근' : '출근') + '</button>'
+    + '</div>'
+  + '</div>';
+
+  html += '<div class="stats">'
+    + statCard(s.total, '전체 요원', '명')
+    + statCard(s.onDuty, '현재 근무 중', '명')
+    + statCard(s.reports, '누적 보고서', '건')
+    + '<div class="stat rv"><div class="stat-n mono" style="font-size:19px;line-height:1.4">' + fmtDur(s.myTotalMs) + '</div><div class="stat-l">내 누적 근무</div></div>'
+  + '</div>';
+
+  html += '<div class="grid2">'
+    + '<div class="panel rv"><div class="sec"><div><div class="sec-eyebrow">// LIVE</div><div class="sec-title">현재 근무 중</div></div><span class="sec-side" id="onduty-count">' + onduty.length + ' ON DUTY</span></div>'
+    +   '<div class="list" id="onduty-list">' + ondutyList(onduty) + '</div></div>'
+    + '<div class="panel rv"><div class="sec"><div><div class="sec-eyebrow">// BOARD</div><div class="sec-title">공지사항</div></div><span class="sec-side">' + d.notices.length + ' POSTED</span></div>'
+    +   '<div class="list">' + (d.notices.length ? d.notices.slice(0, 6).map(n =>
+          '<div class="notice">' + esc(n.content) + '<div class="notice-meta">' + esc(n.author) + ' · ' + fmtTime(n.createdAt) + '</div></div>').join('') : '<div class="empty">등록된 공지가 없습니다</div>')
+    +   '</div></div>'
+  + '</div>';
+
+  main().innerHTML = html;
+  stagger();
+  document.querySelectorAll('#main .cnt').forEach(el => countUp(el, parseInt(el.dataset.v, 10) || 0));
+  document.getElementById('dutyBtn').addEventListener('click', dutyToggle);
+  if (me.onDuty){
+    addTimer(() => {
+      const t = document.getElementById('dq-timer');
+      if (t && me.onDuty) t.firstChild.textContent = fmtHMS(Date.now() - me.dutyStart);
+    }, 1000);
+  }
+  addTimer(async () => {
+    try {
+      const dd = await api('/overview'); if (g !== gen) return;
+      me = dd.me;
+      const od = dd.members.filter(m => m.onDuty);
+      const list = document.getElementById('onduty-list');
+      if (list) list.innerHTML = ondutyList(od);
+      const cnt = document.getElementById('onduty-count');
+      if (cnt) cnt.textContent = od.length + ' ON DUTY';
+      const hd = document.getElementById('hdr-dot');
+      if (hd) hd.classList.toggle('on', !!me.onDuty);
+    } catch (e){}
+  }, 30000);
+}
+
+/* ---------------- duty ---------------- */
+function bigClockHtml(){
+  const d = new Date();
+  const col = '<span class="colon">:</span>';
+  return two(d.getHours()) + col + two(d.getMinutes()) + col + two(d.getSeconds());
+}
+function bigDateStr(){
+  const d = new Date();
+  const wd = ['SUN','MON','TUE','WED','THU','FRI','SAT'][d.getDay()];
+  return d.getFullYear() + '.' + two(d.getMonth() + 1) + '.' + two(d.getDate()) + ' ' + wd;
+}
+function dutyTable(logs){
+  if (!logs.length) return '<div class="empty">기록이 없습니다</div>';
+  return '<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Agent</th><th>Clock-in</th><th>Clock-out</th><th>Duration</th></tr></thead><tbody>'
+    + logs.map(l => '<tr><td class="strong">' + esc(l.member) + '</td><td class="mono-cell">' + fmtTime(l.start) + '</td><td class="mono-cell">' + fmtTime(l.end) + '</td><td class="mono-cell" style="color:var(--white)">' + fmtDur(l.ms) + '</td></tr>').join('')
+    + '</tbody></table></div>';
+}
+async function viewDuty(g){
+  await ensureMe(); if (g !== gen) return;
+  shell('duty', '<div class="loading mono">LOADING ...</div>');
+  const results = await Promise.all([api('/overview'), api('/duty/logs' + (dutyMine ? '?mine=1' : ''))]);
+  if (g !== gen) return;
+  const ov = results[0], lg = results[1];
+  me = ov.me;
+  const s = ov.stats;
+
+  let html = '<div class="sec rv"><div><div class="sec-eyebrow">// FILE 02 — ATTENDANCE</div><div class="sec-title">출퇴근 기록</div></div><span class="sec-side">SIGNAL TIME SYSTEM</span></div>';
+
+  html += '<div class="panel corners rv" style="margin-bottom:16px">'
+    + '<div class="bigclock">'
+    +   '<div class="bc-time" id="bigclock">' + bigClockHtml() + '</div>'
+    +   '<div class="bc-date" id="bigdate">' + bigDateStr() + '</div>'
+    +   '<button class="btn duty-btn ' + (me.onDuty ? 'working' : 'btn-solid') + '" id="dutyBtn" style="max-width:420px">' + (me.onDuty ? '퇴근' : '출근') + '</button>'
+    +   (me.onDuty ? '<div class="mono" id="sess" style="margin-top:16px;font-size:13px;color:var(--gray);letter-spacing:.12em">세션 ' + fmtHMS(Date.now() - me.dutyStart) + '</div>' : '')
+    + '</div></div>';
+
+  html += '<div class="ministats">'
+    + '<div class="ms rv"><div class="n mono">' + fmtDur(s.myTotalMs) + '</div><div class="l">누적 근무</div></div>'
+    + '<div class="ms rv"><div class="n mono">' + fmtDur(s.myWeekMs) + '</div><div class="l">최근 7일</div></div>'
+    + '<div class="ms rv"><div class="n mono">' + s.mySessions + '회</div><div class="l">근무 횟수</div></div>'
+  + '</div>';
+
+  html += '<div class="panel rv">'
+    + '<div class="sec"><div><div class="sec-eyebrow">// LOG</div><div class="sec-title">근무 기록</div></div>'
+    + '<div class="toggle"><button class="tg-btn' + (dutyMine ? '' : ' on') + '" id="tg-all">전체</button><button class="tg-btn' + (dutyMine ? ' on' : '') + '" id="tg-mine">내 기록</button></div></div>'
+    + dutyTable(lg.logs)
+  + '</div>';
+
+  main().innerHTML = html; stagger();
+  document.getElementById('dutyBtn').addEventListener('click', dutyToggle);
+  document.getElementById('tg-all').addEventListener('click', () => { dutyMine = false; route(); });
+  document.getElementById('tg-mine').addEventListener('click', () => { dutyMine = true; route(); });
+  addTimer(() => {
+    const c = document.getElementById('bigclock'); if (c) c.innerHTML = bigClockHtml();
+    const sess = document.getElementById('sess');
+    if (sess && me.onDuty) sess.textContent = '세션 ' + fmtHMS(Date.now() - me.dutyStart);
+  }, 1000);
+}
+
+/* ---------------- reports ---------------- */
+function rbField(k, val){
+  return '<div class="rb-field"><div class="k">' + k + '</div><div class="v">' + esc(val) + '</div></div>';
+}
+function reportRow(r){
+  const canDel = r.mine || (me && me.isAdmin);
+  return '<div class="report rv">'
+    + '<button class="report-head" type="button">'
+    +   '<span class="tag"><span class="sym">' + (TYPE_SYM[r.type] || '○') + '</span>' + esc(r.type) + '</span>'
+    +   '<span class="report-title">' + esc(r.title) + '</span>'
+    +   '<span class="report-meta">' + esc(r.author) + ' · ' + fmtTime(r.createdAt) + '</span>'
+    +   '<span class="report-arrow">▶</span>'
+    + '</button>'
+    + '<div class="report-body"><div><div class="rb-inner">'
+    +   '<div class="rb-grid">'
+    +     rbField('장소', r.location || '-')
+    +     rbField('참여 요원', r.agents || '-')
+    +     rbField('처리 결과', r.result)
+    +   '</div>'
+    +   '<div class="report-content">' + esc(r.content) + '</div>'
+    +   (canDel ? '<button class="btn btn-xs danger" data-del="' + r.id + '">삭제</button>' : '')
+    + '</div></div></div>'
+  + '</div>';
+}
+async function viewReports(g){
+  await ensureMe(); if (g !== gen) return;
+  shell('reports', '<div class="loading mono">LOADING ...</div>');
+  const d = await api('/reports'); if (g !== gen) return;
+  const reports = d.reports;
+  const filters = ['ALL'].concat(REPORT_TYPES);
+  const shown = repFilter === 'ALL' ? reports : reports.filter(r => r.type === repFilter);
+
+  let html = '<div class="sec rv"><div><div class="sec-eyebrow">// FILE 03 — RP REPORTS</div><div class="sec-title">RP 보고서</div></div>'
+    + '<button class="btn btn-solid" id="newRep">+ 보고서 작성</button></div>';
+  html += '<div class="filterbar rv">' + filters.map(f =>
+    '<button class="chip-btn' + (f === repFilter ? ' on' : '') + '" data-f="' + f + '">' + (f === 'ALL' ? '전체' : TYPE_SYM[f] + ' ' + f) + '</button>').join('') + '</div>';
+  html += '<div id="repList">' + (shown.length ? shown.map(reportRow).join('') : '<div class="panel rv"><div class="empty">해당 유형의 보고서가 없습니다</div></div>') + '</div>';
+
+  main().innerHTML = html; stagger();
+  document.getElementById('newRep').addEventListener('click', openReportModal);
+  document.querySelectorAll('[data-f]').forEach(b => b.addEventListener('click', () => { repFilter = b.dataset.f; route(); }));
+  document.querySelectorAll('.report-head').forEach(h => h.addEventListener('click', () => h.closest('.report').classList.toggle('open')));
+  document.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', async () => {
+    if (!confirm('이 보고서를 삭제할까요?')) return;
+    try { await api('/reports/' + b.dataset.del, { method: 'DELETE' }); toast('보고서가 삭제되었습니다.'); route(); }
+    catch (e){ toast(e.message, true); }
+  }));
+}
+function openReportModal(){
+  const m = document.createElement('div');
+  m.className = 'modal';
+  m.innerHTML = '<div class="modal-panel corners">'
+    + '<div class="modal-head"><div><div class="sec-eyebrow">// NEW REPORT</div><div class="modal-title">RP 보고서 작성</div></div><button class="modal-close" type="button">✕</button></div>'
+    + '<div class="grid2">'
+    +   '<div class="field"><label>사건 유형</label><select class="inp" id="rp-type">' + REPORT_TYPES.map(t => '<option>' + t + '</option>').join('') + '</select></div>'
+    +   '<div class="field"><label>처리 결과</label><select class="inp" id="rp-result">' + REPORT_RESULTS.map(t => '<option>' + t + '</option>').join('') + '</select></div>'
+    + '</div>'
+    + '<div class="field"><label>제목</label><input class="inp" id="rp-title" maxlength="60" placeholder="예: 퍼시픽 은행 강도 대응 보고"></div>'
+    + '<div class="grid2">'
+    +   '<div class="field"><label>발생 장소</label><input class="inp" id="rp-loc" maxlength="60" placeholder="예: 레기온 스퀘어 편의점"></div>'
+    +   '<div class="field"><label>참여 요원</label><input class="inp" id="rp-agents" maxlength="120" placeholder="예: SG-03, SG-07"></div>'
+    + '</div>'
+    + '<div class="field"><label>상세 내용</label><textarea class="inp" id="rp-content" maxlength="3000" placeholder="상황 개요, 대응 과정, 특이사항을 기록하십시오."></textarea></div>'
+    + '<button class="btn btn-solid btn-block" id="rp-submit" type="button">보고서 제출</button>'
+  + '</div>';
+  document.body.appendChild(m);
+  function close(){ m.remove(); document.removeEventListener('keydown', onKey); }
+  function onKey(e){ if (e.key === 'Escape') close(); }
+  document.addEventListener('keydown', onKey);
+  m.addEventListener('click', e => { if (e.target === m) close(); });
+  m.querySelector('.modal-close').addEventListener('click', close);
+  m.querySelector('#rp-submit').addEventListener('click', async () => {
+    try {
+      await api('/reports', { method: 'POST', body: {
+        type: v('rp-type'), result: v('rp-result'),
+        title: v('rp-title'), location: v('rp-loc'), agents: v('rp-agents'),
+        content: vraw('rp-content').trim()
+      }});
+      close();
+      toast('보고서가 제출되었습니다.');
+      route();
+    } catch (e){ toast(e.message, true); }
+  });
+}
+
+/* ---------------- ranks ---------------- */
+async function viewRanks(g){
+  await ensureMe(); if (g !== gen) return;
+  shell('ranks', '<div class="loading mono">LOADING ...</div>');
+  const d = await api('/ranks'); if (g !== gen) return;
+  const total = d.ranks.reduce((s, r) => s + r.members.length, 0);
+  let html = '<div class="sec rv"><div><div class="sec-eyebrow">// FILE 04 — COMMAND STRUCTURE</div><div class="sec-title">직급표</div></div><span class="sec-side">' + total + ' AGENTS TOTAL</span></div>';
+  html += '<div class="ranks-wrap"><div class="rank-line"></div>'
+    + d.ranks.map((r, i) => {
+      const w = Math.min(100, 34 + i * 11);
+      return '<div class="tier rv t-' + i + '" style="width:' + w + '%">'
+        + '<div class="tier-top"><span class="tier-code">' + r.code + '</span><span class="tier-name">' + esc(r.name) + '</span><span class="tier-count">' + r.members.length + ' AGENT' + (r.members.length === 1 ? '' : 'S') + '</span></div>'
+        + '<div class="tier-desc">' + esc(r.desc) + '</div>'
+        + (r.members.length ? '<div class="tier-members">' + r.members.map(mm =>
+            '<span class="mem-chip"><i class="dot' + (mm.onDuty ? ' on' : '') + '"></i>' + esc(mm.name) + ' <span class="mono" style="color:var(--dim)">' + esc(mm.callsign) + '</span></span>').join('') + '</div>' : '')
+      + '</div>';
+    }).join('')
+  + '</div>';
+  main().innerHTML = html; stagger();
+}
+
+/* ---------------- admin ---------------- */
+async function viewAdmin(g){
+  await ensureMe(); if (g !== gen) return;
+  if (!me.isAdmin){ toast('관리자 권한이 필요합니다.', true); return go('dash'); }
+  shell('admin', '<div class="loading mono">LOADING ...</div>');
+  const d = await api('/overview'); if (g !== gen) return;
+  me = d.me;
+
+  let html = '<div class="sec rv"><div><div class="sec-eyebrow">// FILE 05 — ADMIN CONSOLE</div><div class="sec-title">관리 콘솔</div></div><span class="sec-side">RESTRICTED ACCESS</span></div>';
+
+  html += '<div class="panel rv" style="margin-bottom:16px">'
+    + '<div class="sec"><div><div class="sec-eyebrow">// BOARD</div><div class="sec-title">공지 관리</div></div></div>'
+    + '<div class="field"><textarea class="inp" id="nt-content" maxlength="500" style="min-height:70px" placeholder="새 공지 내용을 입력하십시오."></textarea></div>'
+    + '<button class="btn btn-solid" id="nt-add">공지 등록</button>'
+    + '<div class="hr"></div>'
+    + '<div class="list">' + (d.notices.length ? d.notices.map(n =>
+        '<div class="notice" style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start"><div>' + esc(n.content) + '<div class="notice-meta">' + esc(n.author) + ' · ' + fmtTime(n.createdAt) + '</div></div><button class="btn btn-xs danger" data-ndel="' + n.id + '">삭제</button></div>').join('')
+        : '<div class="empty">등록된 공지가 없습니다</div>')
+    + '</div></div>';
+
+  html += '<div class="panel rv">'
+    + '<div class="sec"><div><div class="sec-eyebrow">// PERSONNEL</div><div class="sec-title">요원 관리</div></div><span class="sec-side">국장·부국장 = 관리자 권한</span></div>'
+    + '<div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Name</th><th>Callsign</th><th>Rank</th><th>Total</th><th>Since</th><th></th></tr></thead><tbody>'
+    + d.members.map(mm => '<tr>'
+      + '<td class="strong">' + esc(mm.name) + (mm.isAdmin ? ' <span class="mono xs" style="color:var(--dim)">ADMIN</span>' : '') + '</td>'
+      + '<td class="mono-cell">' + esc(mm.callsign) + '</td>'
+      + '<td>' + (mm.id === me.id
+          ? '<span class="mono-cell">' + esc(mm.rank) + ' (본인)</span>'
+          : '<select class="rank-sel" data-rid="' + mm.id + '">' + RANK_NAMES.map(r => '<option' + (r === mm.rank ? ' selected' : '') + '>' + r + '</option>').join('') + '</select>')
+      + '</td>'
+      + '<td class="mono-cell">' + fmtDur(mm.totalMs) + '</td>'
+      + '<td class="mono-cell">' + fmtTime(mm.joinedAt) + '</td>'
+      + '<td>' + (mm.id === me.id ? '' : '<button class="btn btn-xs danger" data-mdel="' + mm.id + '" data-mname="' + esc(mm.name) + '">삭제</button>') + '</td>'
+    + '</tr>').join('')
+    + '</tbody></table></div></div>';
+
+  main().innerHTML = html; stagger();
+
+  document.getElementById('nt-add').addEventListener('click', async () => {
+    const content = vraw('nt-content').trim();
+    if (!content) return toast('공지 내용을 입력해 주세요.', true);
+    try { await api('/notices', { method: 'POST', body: { content } }); toast('공지가 등록되었습니다.'); route(); }
+    catch (e){ toast(e.message, true); }
+  });
+  document.querySelectorAll('[data-ndel]').forEach(b => b.addEventListener('click', async () => {
+    if (!confirm('이 공지를 삭제할까요?')) return;
+    try { await api('/notices/' + b.dataset.ndel, { method: 'DELETE' }); toast('공지가 삭제되었습니다.'); route(); }
+    catch (e){ toast(e.message, true); }
+  }));
+  document.querySelectorAll('.rank-sel').forEach(sel => sel.addEventListener('change', async () => {
+    const rank = sel.value;
+    if (!confirm('해당 요원의 직급을 「' + rank + '」(으)로 변경할까요?')) return route();
+    try { await api('/admin/rank', { method: 'POST', body: { memberId: sel.dataset.rid, rank } }); toast('인사 발령 완료 — ' + rank); route(); }
+    catch (e){ toast(e.message, true); route(); }
+  }));
+  document.querySelectorAll('[data-mdel]').forEach(b => b.addEventListener('click', async () => {
+    if (!confirm(b.dataset.mname + ' 요원을 명단에서 삭제할까요? 되돌릴 수 없습니다.')) return;
+    try { await api('/admin/member/' + b.dataset.mdel, { method: 'DELETE' }); toast('요원이 삭제되었습니다.'); route(); }
+    catch (e){ toast(e.message, true); }
+  }));
+}
+
+/* ---------------- init ---------------- */
+route();
+</script>
+</body>
+</html>

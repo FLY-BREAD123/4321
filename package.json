@@ -1,18 +1,9 @@
 {
-  "name": "discord-setup-bot",
+  "name": "signal-security-intranet",
   "version": "1.0.0",
-  "description": "Discord server auto-setup bot - categories, channels, roles, colors, permissions",
-  "main": "index.js",
-  "type": "commonjs",
-  "scripts": {
-    "start": "node index.js",
-    "deploy": "node deploy-commands.js"
-  },
-  "dependencies": {
-    "discord.js": "^14.16.3",
-    "dotenv": "^16.4.5"
-  },
-  "engines": {
-    "node": ">=18.0.0"
-  }
+  "private": true,
+  "description": "SIGNAL Security Bureau Intranet (FiveM RP)",
+  "engines": { "node": ">=18" },
+  "scripts": { "start": "node server.js" },
+  "dependencies": { "express": "^4.19.2" }
 }
